@@ -13,8 +13,7 @@ public class TodoController {
 	@Autowired
 	TodoRepository todos;
 	
-	@RequestMapping("/todos")
-	
+	@RequestMapping("/todos")	
 	public Iterable hello() {		
 		return todos.findAll();
 	}

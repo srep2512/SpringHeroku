@@ -27,7 +27,8 @@ dependencies {
 	compile group: 'org.hibernate', name: 'hibernate-entitymanager', version: '4.1.7.Final'
     compile('org.hibernate:hibernate-core:5.2.11.Final')
     compile group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'
-
+    
+    compile ('org.jsoup:jsoup:1.10.3')
     compile('org.springframework.boot:spring-boot-starter-data-jpa')
 	compile('org.springframework.boot:spring-boot-starter-web')
 	compile("com.h2database:h2")
