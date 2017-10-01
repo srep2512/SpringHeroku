@@ -10,7 +10,7 @@ public class TodoController {
 	
 	@RequestMapping("/")
 	public String hello() {
-		return "Hi Mates i've changed";
+		return "Hi Mates i've changed with Travis CI";
 	}
 
 }
