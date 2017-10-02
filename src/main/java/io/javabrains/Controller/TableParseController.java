@@ -1,23 +1,36 @@
 package io.javabrains.Controller;
 
 import java.io.IOException;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.javabrains.entity.Partei;
+import io.javabrains.repositories.ParteiRepository;
+
 @RestController
 public class TableParseController {
 
+	@Autowired
+	ParteiRepository partein;
 	
 	@RequestMapping(value="/table", method = RequestMethod.POST)
-	public String getTable(@RequestBody String url) {
+	public Iterable getTable(@RequestBody String url) throws ParseException {
 		String eles ="";
 		Document doc = new Document("");
 		try {
@@ -27,59 +40,68 @@ public class TableParseController {
 			e.printStackTrace();
 		}
 		
-		ArrayList<String> pnamen = new ArrayList<>();
-		ArrayList<String> zahlen = new ArrayList<>();
+		String name = "";
+		List<Partei> pl = new ArrayList();
+		Elements el = doc.select("tbody");
+		Elements el2 = el.select("tr");
+		//String ret ="";
+		for(Element x : el2) {
+			//List<Node> n = x.childNodes();
+			//n.forEach((no) -> System.out.println(no.toString()));
+			//el2.hasAttr(arg0)
 		
-		String title = doc.title();
-		Element element = doc.select("table").get(0);
-		//Get first Table of HTML
-		
-		Elements rows = doc.getElementsByTag("tbody");
-		/*
-		for (int i = 2; i <= rows.size(); i++) { //first row is the col names so skip it.
-		    //Get Parteiname
-			Element parteiname = rows.select("span").get(i);
+			Elements el3 = x.select("td[style=text-align:right]");
+			if(el3.size() == 4) {
+				long i = partein.count();
+				
+				Partei p = new Partei();
+				Elements names = x.select("div.parteiname-with-parteifarbe");
+				for(Element n : names) {if(n.text() != null) {
+					p.setName(n.text());
+					}
+				}
+				
 			
-			//Name Speichern in Array
-			pnamen.add(parteiname.html());
+				if(el3.get(0).text().isEmpty()) p.setAnzahlErst(0.0); 
+				else
+				p.setAnzahlErst(Double.parseDouble(el3.get(0).text())); 
+				NumberFormat nf = NumberFormat.getInstance(Locale.FRANCE);	
 			
-			//Sammle Children
-			
-					    
-		    eles += parteiname.html() + i;
-		    	    
-		    
-		}*/
-		
-		
-		Element tabelle = rows.get(0);
-		
-		//Alle TR's
-		for(Element el : tabelle.select("tr")) {
-			
-			//Alle Td's in TR
-			for(Element el2 : el.select("td")) {
-			//FailFormat aber wenigstens kommt was raus
-			//if(el2.hasText())					
-			//eles += el2.text();
-			
-		    //Nur Parteien!!! in spans -.-
-			eles += el2.select("span").not("[class]").text() + "\n";
-			
-			//Nur Zahlen
-			eles += el2.getElementsByIndexEquals(4).text() + "\n";
-			
+				if(el3.get(1).text().isEmpty()) p.setStimmenanteilErst(0.0);
+				else
+				p.setStimmenanteilErst(nf.parse(el3.get(1).text()).doubleValue()); 
+				
+				if(el3.get(3).text().isEmpty()) p.setAnzahlZweit(0.0);
+				else
+				p.setAnzahlZweit(Double.parseDouble(el3.get(2).text()));
+				
+				if(el3.get(3).text().isEmpty()) p.setStimmenanteilZweit(0.0);
+				else
+				p.setStimmenanteilZweit(nf.parse(el3.get(3).text()).doubleValue()); 
+				//el3.forEach((el3x) -> System.out.println(el3x.text()));
+				pl.add(p);
 				
 			}
-		}
 			
+		}
 		
 		
+		pl.forEach(x -> {
+			long ct = partein.count();
+		    Partei p = new Partei();
+		    p.setID(ct);
+		    p.setName(x.getName());
+		    p.setAnzahlErst(x.getAnzahlErst());
+		    p.setAnzahlZweit(x.getAnzahlZweit());
+			
+			partein.save(p);
+			
+		});
+		pl.forEach(x -> System.out.println(x.getName() + ":"));
 		
 		
-		
-		
-		
-		return eles;
+		return partein.findAll();
 	}
+	
+	
 }
